@@ -1,0 +1,207 @@
+REPORTE: BÚSQUEDA, ARQUITECTURA WEB Y MAPA
+Fecha: 22-11-2026
+Proyecto: Posteate (apps/web)
+
+Nada está en commit. Todos los cambios están en el working tree para que los revises.
+Verificado: los tipos (tsc), el lint (ESLint) y el build de producción (next build) pasan sin errores.
+Probado con la app corriendo: búsqueda, filtros, paginación, vista de mapa y botón de WhatsApp.
+No probado: el mapa real de Google, porque todavía no hay API key.
+
+
+======================================================================
+PARTE 1: LO QUE SE HIZO
+======================================================================
+
+1. PÁGINA DE BÚSQUEDA (/search)
+-------------------------------
+- Paleta de colores: blanco, morado claro (lila) y negro.
+- Título grande "¿Qué estás buscando?", con la palabra "buscando" resaltada en lila.
+- Barra de búsqueda con:
+    * campo de texto (la tecla "/" lo selecciona desde cualquier parte de la página);
+    * selector de una o varias comunas;
+    * botón "Buscar".
+- Fila de categorías con desplazamiento horizontal. Las categorías propuestas por usuarios
+  llevan la etiqueta "nueva".
+- Tarjetas de publicación con categoría, título, descripción, comunas, sector, precio en CLP,
+  fecha relativa ("hace 2 días") y autor. Las cargadas por el equipo dicen "Cargada por Posteate".
+- Botón de WhatsApp: círculo verde con solo el logo. Para accesibilidad, al pasar el mouse
+  dice "Contactar por WhatsApp a {autor}".
+- La búsqueda queda en la URL, así se puede compartir y Google la puede indexar. Ejemplo:
+    /search?q=arriendo&commune=melipilla,talagante&category=real-estate&view=map
+- La búsqueda ignora tildes: "curacavi" encuentra "Curacaví".
+- Paginación por cursor (nunca offset), con "Ver más resultados" y "Volver al inicio".
+- Mensaje para cuando no hay resultados, con un enlace para limpiar la búsqueda.
+- Diseño adaptado a celular.
+- La página se arma en el servidor (SSR), lo que ayuda al SEO y a las vistas previas
+  al compartir por WhatsApp.
+
+Reglas del producto que se respetan:
+- Solo aparecen publicaciones activas (no las pausadas, vencidas ni cerradas).
+- El orden depende de qué tanto coinciden con el texto, de la recencia según la fecha
+  original de publicación (renovar no sube una publicación) y de la calidad de la información.
+  Nunca depende de seguidores, popularidad ni tipo de cuenta.
+- Las comunas y categorías son datos; no están escritas en el código de la interfaz.
+
+
+2. ARQUITECTURA (modular, escalable y mantenible)
+-------------------------------------------------
+Cada capa solo usa la de abajo:  app -> features -> data / shared -> domain
+
+  app/search/page.tsx     La ruta: solo lee la URL y renderiza la página.
+  src/
+    domain/               Tipos y reglas del negocio (Post, Commune, Category, Price, Page).
+                          No usan React ni Next, así se pueden mover a un paquete compartido.
+    data/                 Acceso a datos.
+      repositories.ts     Interfaces PostRepository y CatalogRepository.
+      index.ts            getRepositories(): ÚNICO lugar donde se elige mock o API real.
+      mock/               Implementación en memoria y generador de datos de prueba.
+    shared/               Código común: íconos, botón de WhatsApp, hooks, formatos, config.
+    features/
+      posts/              Tarjeta de publicación (PostCard).
+      search/             Búsqueda: components/, hooks/, lib/, server/, map/.
+                          Todo se importa desde su index.ts.
+
+- Alias de imports: "@/" apunta a apps/web/src/ (configurado en tsconfig.json).
+- Para conectar el backend en Go hay que crear un HttpPostRepository y cambiar una línea
+  en src/data/index.ts. No hay que tocar la interfaz.
+- Esta estructura quedó documentada en docs/IA/architecture.md, marcada como PROPOSAL.
+
+
+3. DATOS DE PRUEBA (mocks)
+--------------------------
+- 320 publicaciones generadas con una semilla fija, así que siempre salen las mismas.
+- Unas 70 plantillas con títulos y descripciones chilenas.
+- 13 categorías listadas (2 propuestas, con la etiqueta "nueva") y 1 categoría fusionada que no
+  se muestra.
+- Las 10 comunas del alcance inicial, con sectores reales de cada una.
+- Precio fijo y por rango, publicaciones cargadas por Posteate, cuentas de persona, negocio y
+  organización, y todos los estados (activa, pausada, vencida y cerrada).
+
+
+4. MAPA
+-------
+- Botón "Lista / Mapa" para cambiar de vista. La vista elegida queda en la URL (?view=map).
+- Usa la API oficial de Google Maps (Maps JavaScript API), cargada con un script. No se agregó
+  ninguna dependencia npm, y los tipos de Google Maps están escritos a mano.
+- Las publicaciones se muestran POR COMUNA, no por dirección exacta, porque la regla del
+  dominio prohíbe guardar coordenadas de las publicaciones. Cada comuna tiene un pin con la
+  cantidad de publicaciones, y al tocarlo se filtran los resultados por esa comuna.
+- Al lado del mapa aparece la lista de resultados en formato compacto.
+- Si no hay API key, o si Google rechaza la key, se muestra un "Mapa referencial" hecho por
+  nosotros, con las comunas en su posición relativa.
+- En desarrollo, si el mapa de Google no carga, la consola del navegador muestra el motivo
+  en un mensaje que empieza con "[map]".
+- Se agregó el centro aproximado de cada comuna, documentado en docs/IA/domain.md como PROPOSAL.
+
+
+5. OTROS CAMBIOS
+----------------
+- apps/web/styles/global.css: colores de la paleta, el verde de WhatsApp y un reset básico.
+- apps/web/app/layout.tsx: importa global.css y usa el idioma lang="es-CL".
+- apps/web/tsconfig.json: se agregó el alias "@/".
+- turbo.json: se agregó "env": ["NEXT_PUBLIC_*"] en la tarea build. Sin esto Turbo descarta
+  las variables y la key de Google no llegaría al build.
+- docs/IA/architecture.md y docs/IA/domain.md: documentación actualizada.
+- next dev generó por su cuenta apps/web/AGENTS.md, apps/web/CLAUDE.md y
+  apps/web/tsconfig.tsbuildinfo. Decide si los subes a git o los agregas al .gitignore
+  (tsconfig.tsbuildinfo normalmente se ignora).
+
+
+======================================================================
+PARTE 2: LO QUE TE FALTA HACER EN GOOGLE CLOUD CONSOLE
+======================================================================
+
+Sitio: https://console.cloud.google.com
+
+PASO 1: Crear el proyecto
+  - En el selector de proyectos de arriba, elige "Proyecto nuevo".
+  - Nombre sugerido: posteate.
+
+PASO 2: Activar la facturación
+  - Menú -> Facturación (Billing) -> asocia una cuenta de facturación con tarjeta.
+  - Google la exige aunque tiene un cupo mensual gratis. En desarrollo y con poco tráfico
+    normalmente no se paga nada.
+
+PASO 3: Habilitar la API
+  - Menú -> APIs y servicios -> Biblioteca.
+  - Busca "Maps JavaScript API" y presiona "Habilitar".
+
+PASO 4: Crear la API key  ->  NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+  - APIs y servicios -> Credenciales -> Crear credenciales -> Clave de API.
+  - Copia el valor.
+
+PASO 5: Restringir la key (importante, porque la key queda visible en el navegador)
+  - Edita la key que creaste.
+  - Restricciones de aplicación -> "Sitios web". Agrega:
+        http://localhost:3000/*
+        https://TU-DOMINIO.vercel.app/*      (cuando tengas el dominio)
+  - Restricciones de API -> "Restringir clave" -> marca solo "Maps JavaScript API".
+  - Guarda.
+
+PASO 6: Crear el Map ID  ->  NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID
+  (Opcional en desarrollo, porque el código usa DEMO_MAP_ID. Necesario para producción.)
+  - Menú -> Google Maps Platform -> Administración de mapas (Map Management).
+  - "Crear ID de mapa" -> ponle un nombre -> tipo: JavaScript.
+  - Copia el ID.
+  - Extra opcional: en "Estilos de mapa" puedes crear un estilo con tonos lila, asociarlo
+    al Map ID y el mapa tomará esos colores sin cambiar código.
+
+
+======================================================================
+PARTE 3: DÓNDE PONER LAS VARIABLES
+======================================================================
+
+EN LOCAL
+  Archivo: apps/web/.env.local   (va en la app, NO en la raíz del monorepo)
+
+      NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=la_key_que_copiaste
+      NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID=el_map_id
+
+  - El .gitignore de apps/web ya ignora .env.local, así que no se sube a git.
+  - Recomendado: deja en apps/web/.env.example los mismos nombres SIN valores, como
+    referencia para el equipo.
+
+EN VERCEL
+  - Proyecto -> Settings -> Environment Variables -> agrega las mismas dos variables.
+  - Vuelve a desplegar. Las variables NEXT_PUBLIC_* se incluyen en el build, así que sin un
+    deploy nuevo no se aplican.
+
+
+======================================================================
+PARTE 4: CÓMO PROBAR CUANDO TENGAS LA KEY
+======================================================================
+
+  1. Detén pnpm dev y vuelve a levantarlo. Next solo lee las variables al arrancar,
+     y esta es la causa más común de que "no funcione".
+  2. Abre http://localhost:3000/search?view=map
+  3. Debes ver el mapa de Google con un pin por comuna que muestra la cantidad de
+     publicaciones. Al tocar un pin se filtran los resultados.
+  4. Si sigue apareciendo el "Mapa referencial", abre la consola del navegador (F12) y
+     busca el mensaje que empieza con "[map]". Indica el motivo:
+       - "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY is not set"
+            -> falta la variable, tiene mal el nombre o no reiniciaste pnpm dev.
+       - "Google Maps rejected the API key"
+            -> la API no está habilitada, falta activar la facturación o la key no permite
+               localhost.
+       - "Could not load Google Maps"
+            -> problema de red, o un bloqueador de anuncios que impide cargar el script.
+
+IMPORTANTE: no compartas la API key en chats ni la subas a git.
+
+
+======================================================================
+PARTE 5: PENDIENTES Y DECISIONES ABIERTAS
+======================================================================
+
+- Hacer commit en una rama feat/... (por ejemplo feat/search-page), desde develop, según
+  las convenciones del repo.
+- Conectar el backend real cuando exista el endpoint de búsqueda: crear un
+  HttpPostRepository en src/data/. El contrato de la API aún está POR DEFINIR.
+- Mover src/domain y src/data a paquetes compartidos (por ejemplo @repo/types y
+  @repo/api-client) cuando se empiece la app móvil.
+- Los pesos del orden por relevancia son provisorios. La fórmula real está pendiente en
+  docs/IA/principles.md.
+- Decidir si la ruta queda como /search o cambia a /buscar.
+- Alternativa sin facturación, si algún día se necesita: OpenStreetMap con Leaflet. Requiere
+  aprobar esa dependencia.
+- Tests: aún no hay herramienta de tests unitarios definida (Vitest o Jest, POR DEFINIR).

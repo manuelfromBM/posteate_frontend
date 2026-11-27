@@ -1,14 +1,9 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { Button } from "@repo/ui";
+import { SEARCH_PATH } from "@/features/search";
 
-import styles from "../styles/index.module.css";
-
-export default function Web() {
-  return (
-    <div className={styles.container}>
-      <h1>Web</h1>
-      <Button onClick={() => console.log("Pressed!")} text="Boop" />
-    </div>
-  );
+// There is no home page yet: the search is the entry point. Temporary (307)
+// so a future home page can take "/" without browsers caching the redirect.
+export default function Page() {
+  redirect(SEARCH_PATH);
 }

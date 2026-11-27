@@ -1,0 +1,58 @@
+.canvas {
+  position: relative;
+  height: 100%;
+  min-height: 420px;
+  overflow: hidden;
+  border: 2px solid var(--color-ink);
+  border-radius: 24px;
+  background: var(--color-lilac-50);
+  box-shadow: 6px 6px 0 var(--color-lilac-300);
+}
+
+.google {
+  position: absolute;
+  inset: 0;
+}
+
+.loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: var(--color-lilac-50);
+  color: var(--color-muted);
+  font-weight: 600;
+}
+
+.schematic {
+  position: absolute;
+  inset: 0;
+  background-color: var(--color-lilac-50);
+  background-image: radial-gradient(var(--color-lilac-200) 1.5px, transparent 1.5px);
+  background-size: 22px 22px;
+}
+
+.schematicPin {
+  position: absolute;
+  transform: translate(-50%, -50%);
+}
+
+.schematicPin:hover {
+  transform: translate(-50%, -50%) scale(1.04);
+}
+
+.schematicPin[data-selected] {
+  z-index: 2;
+}
+
+.badge {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}

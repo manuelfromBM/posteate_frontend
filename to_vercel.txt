@@ -1,0 +1,37 @@
+Revisé tu monorepo (package.json, turbo.json, pnpm-workspace.yaml, apps/web, packages/ui). Estas son las consideraciones para subirlo a Vercel, ordenadas por cuánto te pueden afectar.
+
+Antes de nada: lo que puede romper el build
+
+1. Tus cambios no están en un commit. package.json, pnpm-lock.yaml, pnpm-workspace.yaml y otros archivos están modificados sin commit. Vercel construye desde Git e instala con --frozen-lockfile. Si el lockfile del repo no coincide con los package.json subidos, el build falla.
+2. La versión de Node. En package.json:15 tienes "node": ">=18", pero Next 16 necesita Node 20.9 o superior. Fija la versión en Vercel (Settings → Node.js Version) o sube el valor de engines a ">=20.9".
+3. pnpm 12.3.4. Vercel elige la versión de pnpm según el lockfile. Para que respete tu packageManager, agrega la variable ENABLE_EXPERIMENTAL_COREPACK=1 en el proyecto. No tengo claro que Vercel ya soporte pnpm 12, así que revisa el log del primer deploy.
+4. Las variables de entorno y Turbo. Turbo 2 trabaja en modo estricto: las variables que no declares en turbo.json se filtran durante el build. Si usas, por ejemplo, NEXT_PUBLIC_API_URL, tienes que agregarla así:
+"build": { "env": ["NEXT_PUBLIC_*"], ... }
+   Si no lo haces, el build puede salir bien pero con la URL de la API undefined.
+5. allowBuilds. Hoy solo autorizas esbuild, que es el que necesita tsup para @repo/ui. Si después usas next/image en producción y pnpm bloquea el script de instalación de sharp, tendrás que autorizarlo también.
+
+Cómo configurar el proyecto en Vercel
+
+- Root Directory: apps/web. Vercel detecta Turborepo y pnpm, instala desde la raíz y construye con turbo run build --filter=web. Turbo construye @repo/ui primero gracias a dependsOn: ["^build"]. No subas dist/ a Git.
+- Rama de producción: master. Las demás ramas generan deploys de preview.
+- Ignored Build Step: npx turbo-ignore. Así no se reconstruye la web cuando solo cambias apps/mobile.
+- Instalación pesada. Con nodeLinker: hoisted, Vercel instala todo el workspace, incluidos React Native y Expo. Funciona, pero la instalación será más lenta. Por ahora es aceptable.
+
+La integración con el backend en Render
+
+- Región. Render no tiene región en Sudamérica. Pon las funciones de Vercel cerca del backend (por ejemplo iad1 si Render está en Virginia u Ohio). Como el SSR llama a la API en cada request, esa latencia es la que más pesa.
+- Arranque en frío. El plan gratis de Render se apaga cuando no recibe tráfico, y el primer SSR después de eso puede tardar o dar timeout.
+- CORS. El backend tiene que aceptar tu dominio de producción y también los dominios de preview *.vercel.app. Mejor aún: haz que los previews apunten a una API de staging y no a producción.
+- Cookies del refresh token. Si web y API quedan en dominios distintos (*.vercel.app y *.onrender.com), la cookie pasa a ser de terceros y necesita SameSite=None; Secure, y aun así algunos navegadores la bloquean. Lo recomendable es un dominio propio con subdominios, por ejemplo posteate.cl y api.posteate.cl.
+
+Imágenes, plan y secretos
+
+- Imágenes desde S3/R2. Para usar next/image debes configurar images.remotePatterns en next.config.js. La optimización de imágenes tiene cuota según el plan.
+- El plan. Hobby es solo para uso no comercial. Si Posteate va a tener uso comercial, necesitas Pro.
+- Secretos. Configúralos en el panel de Vercel, separados por entorno (Production, Preview, Development), nunca en el repo. Lo que lleve el prefijo NEXT_PUBLIC_ queda expuesto en el navegador, así que ahí solo van URLs públicas.
+
+Lo que falta definir
+
+docs/IA/architecture.md:163 tiene pendiente un TODO sobre entornos, variables de entorno y CI/CD, y la base de datos sigue marcada como TO BE DEFINED. Conviene decidir esas cosas antes de lanzar y dejarlas escritas ahí.
+
+¿Quieres que prepare los cambios (engines, env en turbo.json, remotePatterns) en el working tree para que los revises?

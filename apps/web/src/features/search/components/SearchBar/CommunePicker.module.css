@@ -1,0 +1,167 @@
+.root {
+  position: relative;
+}
+
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-ink);
+  font: inherit;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.trigger:hover,
+.trigger[aria-expanded="true"] {
+  background: var(--color-lilac-100);
+}
+
+.trigger[data-active] {
+  color: var(--color-lilac-700);
+}
+
+.label {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.panel {
+  position: absolute;
+  top: calc(100% + 14px);
+  right: 0;
+  z-index: 20;
+  width: 300px;
+  padding: 16px;
+  background: var(--color-surface);
+  border: 2px solid var(--color-ink);
+  border-radius: 20px;
+  box-shadow: 6px 6px 0 var(--color-lilac-300);
+  animation: pop 140ms ease-out;
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+.title {
+  margin: 0 0 10px;
+  font-weight: 700;
+}
+
+.list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 10px;
+  font-size: 0.9375rem;
+  cursor: pointer;
+}
+
+.option:hover {
+  background: var(--color-lilac-50);
+}
+
+.option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.check {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--color-ink);
+  border-radius: 5px;
+  color: transparent;
+}
+
+.option[data-checked] .check {
+  background: var(--color-lilac-300);
+  color: var(--color-ink);
+}
+
+.option input:focus-visible + .check {
+  outline: 2px solid var(--color-lilac-500);
+  outline-offset: 2px;
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+}
+
+.clear,
+.apply {
+  height: 36px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.clear {
+  background: transparent;
+  color: var(--color-muted);
+}
+
+.clear:hover {
+  color: var(--color-ink);
+}
+
+.apply {
+  background: var(--color-ink);
+  color: var(--color-surface);
+}
+
+@media (max-width: 640px) {
+  .root {
+    flex: 1;
+  }
+
+  .trigger {
+    width: 100%;
+    background: var(--color-lilac-50);
+  }
+
+  .label {
+    flex: 1;
+    max-width: none;
+    text-align: left;
+  }
+
+  .panel {
+    left: 0;
+    right: auto;
+    width: min(300px, calc(100vw - 48px));
+  }
+}

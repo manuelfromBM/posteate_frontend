@@ -1,0 +1,92 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  border: 1.5px solid var(--color-ink);
+  border-radius: 20px;
+  background: var(--color-surface);
+  box-shadow: 5px 5px 0 var(--color-lilac-300);
+}
+
+.price {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.priceHint {
+  color: var(--color-muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.author {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--color-lilac-200);
+  color: var(--color-lilac-800);
+  font-weight: 800;
+}
+
+.avatar[data-curated] {
+  background: var(--color-ink);
+  color: var(--color-surface);
+}
+
+.authorText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.authorName {
+  font-weight: 700;
+}
+
+.authorName[data-curated] {
+  color: var(--color-lilac-700);
+}
+
+.authorDetail {
+  color: var(--color-muted);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.unavailable {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--color-lilac-50);
+  color: var(--color-muted);
+  font-size: 0.875rem;
+}
+
+.share {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px dashed var(--color-border);
+}
+
+.shareLabel {
+  color: var(--color-muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}

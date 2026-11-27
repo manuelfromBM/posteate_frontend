@@ -1,0 +1,19 @@
+.notice {
+  padding: 16px 18px;
+  border: 1.5px solid var(--color-ink);
+  border-radius: 16px;
+  background: var(--color-lilac-100);
+}
+
+.title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.description {
+  margin: 4px 0 0;
+  color: var(--color-muted);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}

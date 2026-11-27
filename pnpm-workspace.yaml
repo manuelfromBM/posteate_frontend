@@ -1,5 +1,19 @@
 packages:
   - "apps/*"
   - "packages/*"
+
+# React Native (Metro, autolinking, Gradle/CocoaPods) needs a flat node_modules
+nodeLinker: hoisted
+
+# Single source of truth for versions shared between web and mobile
+catalog:
+  react: 19.3.0
+  react-dom: 19.3.0
+  react-native: 0.88.1
+  react-native-web: ^0.21.4
+  "@types/react": ~19.3.0
+  "@types/react-dom": ~19.3.0
+  typescript: 6.0.3
+
 allowBuilds:
-  esbuild: set this to true or false
+  esbuild: true

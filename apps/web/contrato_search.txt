@@ -1,0 +1,408 @@
+CONTRATO FRONTEND → BACKEND: PÁGINA DE BÚSQUEDA (/search)
+Proyecto: Posteate (apps/web)
+Fecha: 27-11-2026
+Alcance: solo lo que necesita la página /search (lista, carruseles y mapa).
+         NO incluye el detalle de publicación (/posts/{id}) ni publicar.
+
+Estado: PROPUESTA del frontend. Hoy la web funciona con datos de prueba (mocks) que imitan
+exactamente este contrato. Para conectar el backend solo se cambia la capa de datos
+(apps/web/src/data). Las pantallas no se tocan.
+
+Interfaz de referencia en el código: apps/web/src/data/repositories.ts
+Tipos de referencia:                 apps/web/src/domain/*.ts
+
+
+======================================================================
+0. REGLAS GENERALES
+======================================================================
+
+- REST + JSON. Campos JSON en camelCase. Rutas en kebab-case y en plural.
+- Prefijo de versión (/api/v1/...): POR DEFINIR (docs/IA/architecture.md). En este documento
+  las rutas van sin prefijo.
+- Todos los endpoints de este documento son PÚBLICOS: no requieren cuenta ni token.
+  Buscar, ver y contactar no requieren cuenta (regla fija del producto).
+- Fechas en ISO 8601 UTC: "2026-11-20T14:32:00.000Z".
+- Montos en CLP, números enteros, sin decimales.
+- Paginación SOLO por cursor, nunca por offset ni número de página.
+- Formato de errores: POR DEFINIR. Sugerencia:
+    { "error": { "code": "INVALID_CURSOR", "message": "..." } }
+- Comunas y categorías son DATOS, no constantes: el frontend nunca tiene la lista escrita en el
+  código. Siempre las pide a la API.
+
+
+======================================================================
+1. GET /communes — lista de comunas
+======================================================================
+
+Para qué: el selector de comunas del buscador, los nombres en los resultados y el mapa.
+
+Request
+  GET /communes
+  Sin parámetros.
+
+Response 200
+  {
+    "items": [
+      {
+        "id": "c1",
+        "slug": "melipilla",
+        "name": "Melipilla",
+        "center": { "lat": -33.6891, "lng": -71.2153 }
+      },
+      {
+        "id": "c6",
+        "slug": "talagante",
+        "name": "Talagante",
+        "center": { "lat": -33.665, "lng": -70.93 }
+      }
+    ]
+  }
+
+Campos de Commune
+  id      string  obligatorio
+  slug    string  obligatorio  Se usa en la URL y en los filtros (?commune=melipilla).
+                               Estable: no debe cambiar.
+  name    string  obligatorio  Nombre para mostrar, con tildes ("Curacaví").
+  center  object  obligatorio  { lat, lng } aproximado del centro de la comuna. Encuadra el mapa
+                               y ubica el pin de cada comuna.
+
+Notas
+  - Son pocas (hoy 10): se devuelven todas, sin paginar.
+  - El orden de "items" es el que se muestra en el selector.
+
+
+======================================================================
+2. GET /categories — lista de categorías
+======================================================================
+
+Para qué: los botones de categoría (selección múltiple), los carruseles por categoría y los
+nombres en las tarjetas.
+
+Request
+  GET /categories
+  Sin parámetros.
+
+Response 200
+  {
+    "items": [
+      { "id": "k2", "slug": "real-estate", "name": "Arriendos y propiedades", "status": "approved" },
+      { "id": "k6", "slug": "events", "name": "Eventos", "status": "approved" },
+      { "id": "k12", "slug": "classes", "name": "Clases particulares", "status": "proposed" }
+    ]
+  }
+
+Campos de Category
+  id        string  obligatorio
+  slug      string  obligatorio  Se usa en la URL y en los filtros (?category=events). Estable.
+  name      string  obligatorio  Nombre para mostrar.
+  status    string  obligatorio  "approved" | "proposed". Con "proposed", la UI muestra la
+                                 etiqueta "nueva".
+  parentId  string  opcional     Para subcategorías (todavía no se usa en la UI).
+
+Notas
+  - Devolver SOLO las categorías listables: "approved" y "proposed". Nunca "rejected" ni
+    "merged".
+  - El orden de "items" es el orden del catálogo: así se ordenan los botones y los carruseles
+    por categoría.
+
+
+======================================================================
+3. GET /posts — búsqueda de publicaciones (el endpoint principal)
+======================================================================
+
+Para qué: la lista de resultados, cada carrusel de la búsqueda y el listado lateral del mapa.
+El frontend lo llama varias veces por carga de página (ver sección 5).
+
+Request
+  GET /posts?q=casa&commune=melipilla,talagante&category=real-estate&sort=relevance&withLocation=false&limit=12&cursor=eyJzY29yZSI6...
+
+Parámetros (todos opcionales salvo limit)
+  q             string   Texto buscado. Máximo 120 caracteres (el frontend ya lo recorta).
+                         Vacío = sin filtro de texto.
+  commune       string   Slugs de comunas separados por coma. Vacío = todas.
+                         Una publicación coincide si tiene CUALQUIERA de esas comunas.
+  category      string   Slugs de categorías separados por coma. Vacío = todas.
+                         Una publicación coincide si es de CUALQUIERA de esas categorías.
+  sort          string   "relevance" (por defecto) | "newest".
+  withLocation  boolean  true = solo publicaciones que tienen "location". Por defecto false.
+                         Lo usa la vista de mapa.
+  limit         integer  Obligatorio. El frontend usa 12 (lista) y 10 (carruseles).
+                         Sugerencia: aceptar de 1 a 50.
+  cursor        string   El "nextCursor" de la respuesta anterior. Sin cursor = primera página.
+
+  Si prefieren parámetros repetidos (?commune=a&commune=b) en vez de comas, se cambia en el
+  cliente sin problema. Solo hay que acordarlo.
+
+Response 200
+  {
+    "items": [ Post, Post, ... ],
+    "nextCursor": "eyJzY29yZSI6MS4wNSwicHVibGlzaGVkQXQiOiIyMDI2LTExLTIwVDE0OjMyOjAwLjAwMFoiLCJpZCI6InAwMTc0In0"
+  }
+
+  nextCursor  string | null  null cuando no hay más resultados. Es OPACO para el frontend: no lo
+                             lee ni lo arma, solo lo devuelve tal cual en el siguiente request.
+
+Reglas que el backend DEBE cumplir (reglas fijas del producto, docs/IA/principles.md)
+  1. Solo publicaciones con status "active". Las pausadas, vencidas y cerradas no aparecen en la
+     búsqueda.
+  2. sort=relevance: coincidencia con el texto + antigüedad + calidad de la información (tiene
+     precio, sector o fotos). Los pesos exactos están POR DEFINIR.
+     NUNCA influyen: verificación, tipo de cuenta, antigüedad de la cuenta, popularidad, vistas,
+     clics ni veces compartida.
+  3. sort=newest: solo por fecha de publicación ORIGINAL, de la más nueva a la más antigua.
+  4. Renovar una publicación NO la sube: siempre se usa la fecha de publicación original.
+  5. Orden estable para que el cursor funcione: puntaje, luego publishedAt (más nueva primero) y
+     luego id como desempate. El cursor debe codificar la posición en ese orden.
+  6. Sin texto (q vacío), sort=relevance ordena casi por antigüedad, con un pequeño bonus por
+     calidad de la información.
+
+
+======================================================================
+4. GET /posts/commune-counts — cantidad de resultados por comuna
+======================================================================
+
+Para qué: (a) los pines del mapa con el número de publicaciones de cada comuna, y (b) decidir
+qué carruseles por comuna mostrar (primero las comunas con más resultados).
+
+Request
+  GET /posts/commune-counts?q=casa&category=real-estate&withLocation=true
+
+Parámetros
+  Los mismos filtros que GET /posts (q, category, withLocation), pero SIN commune, sort, limit
+  ni cursor. Si llega "commune", se ignora: el mapa muestra todas las comunas, no solo las
+  seleccionadas.
+
+Response 200
+  {
+    "items": [
+      {
+        "commune": { "id": "c1", "slug": "melipilla", "name": "Melipilla", "center": { "lat": -33.6891, "lng": -71.2153 } },
+        "count": 18
+      },
+      {
+        "commune": { "id": "c6", "slug": "talagante", "name": "Talagante", "center": { "lat": -33.665, "lng": -70.93 } },
+        "count": 7
+      }
+    ]
+  }
+
+Reglas
+  - Mismas reglas de filtrado que GET /posts: solo "active" y los mismos filtros.
+  - Ordenado por "count" de mayor a menor.
+  - Se pueden omitir las comunas con count 0.
+  - Una publicación con varias comunas suma 1 en cada una.
+  - Con withLocation=true, cuenta solo las publicaciones que tienen "location", para que los
+    números del mapa coincidan con su listado.
+  - Si prefieren devolver solo "communeId" en vez del objeto completo, el frontend lo cruza con
+    GET /communes. Hay que acordarlo.
+
+
+======================================================================
+5. QUÉ LLAMA LA PÁGINA EN CADA CASO
+======================================================================
+
+Todas las llamadas se hacen desde el servidor de Next.js (SSR), no desde el navegador.
+El estado de la búsqueda vive en la URL de la web, por ejemplo:
+  /search?q=casa&commune=melipilla,talagante&category=real-estate,jobs&view=map&cursor=...
+
+A) Vista de lista, primera página (sin cursor)
+   1. GET /communes
+   2. GET /categories
+   3. GET /posts?{filtros}&limit=12                                       → lista principal
+   4. GET /posts/commune-counts?{filtros}                                 → para planear carruseles
+   5. Carruseles, todos con limit=10 y los filtros actuales más su filtro propio:
+      - "Lo más reciente":          GET /posts?{filtros}&sort=newest&limit=10
+      - Uno por categoría:          GET /posts?{filtros}&category={slug}&limit=10
+        (todas las categorías si no hay ninguna elegida, o solo las elegidas si hay varias)
+      - Uno por comuna (solo si hay alguna categoría elegida):
+                                    GET /posts?{filtros}&commune={slug}&limit=10
+   El frontend esconde los carruseles con menos de 3 publicaciones y muestra máximo 5 por tipo.
+
+B) Vista de lista, página 2 en adelante (con cursor)
+   GET /communes, GET /categories y GET /posts?{filtros}&limit=12&cursor=...
+   Sin carruseles.
+
+C) Vista de mapa (view=map)
+   1. GET /communes
+   2. GET /categories
+   3. GET /posts?{filtros}&withLocation=true&limit=12[&cursor=...]         → listado lateral
+   4. GET /posts/commune-counts?{filtros sin commune}&withLocation=true    → pines con números
+   Sin carruseles.
+
+OJO con la cantidad de llamadas: en la vista de lista sin filtros son unas 15 por carga
+(1 por cada categoría). Para empezar está bien, porque son consultas simples. Si se vuelve
+lento, la alternativa es un endpoint que devuelva todos los carruseles en una sola respuesta
+(por ejemplo GET /posts/discovery). Se puede agregar después sin tocar las pantallas.
+
+
+======================================================================
+6. OBJETO Post (lo que devuelve GET /posts en cada item)
+======================================================================
+
+Campo            Tipo                Oblig.  Notas
+---------------  ------------------  ------  -------------------------------------------------
+id               string              sí      Estable. Se usa en la URL pública /posts/{id}.
+title            string              sí
+description      string              sí      Texto plano. La tarjeta muestra 2 líneas.
+category         Category            sí      Objeto completo (ver sección 2).
+communes         Commune[]           sí      UNA O MÁS. Dato obligatorio: es lo que usan la
+                                             búsqueda, los filtros y los conteos.
+sector           string              no      Barrio o sector ("Centro", "Villa Los Jardines").
+location         PostLocation        no      Lugar elegido en Google Maps. Ver abajo.
+price            Price               no      Ver abajo. Sin precio = no se muestra.
+imageUrls        string[]            sí      URLs absolutas (S3/R2). Puede ser []. La primera
+                                             es la portada. La web solo carga imágenes de
+                                             dominios permitidos en next.config.js: avisar el
+                                             dominio final del bucket.
+status           string              sí      "active" | "paused" | "expired" | "closed".
+                                             En la búsqueda siempre llega "active".
+publishedAt      string (ISO 8601)   sí      Fecha ORIGINAL de publicación (no cambia al renovar).
+expiresAt        string (ISO 8601)   sí
+source           string              sí      "account" | "curated" (cargada por Posteate).
+author           PostAuthor          no      Viene si source="account". NO viene si "curated".
+contactWhatsapp  string              sí      Solo dígitos, con código de país: "56912345678".
+contactEmail     string              no      Correo de CONTACTO opcional del perfil (o de la
+                                             publicación, si es "curated"). NUNCA el correo de
+                                             inicio de sesión. Sin correo = no se muestra el
+                                             botón.
+
+Price (dos formas, siempre en CLP)
+  { "type": "fixed", "amount": 450000 }
+  { "type": "range", "min": 15000, "max": 25000 }
+  No existe "a convenir" ni "gratis".
+
+PostAuthor
+  displayName  string  sí  Nombre para mostrar ("Carolina M.", "Ferretería Juan").
+  accountType  string  sí  "person" | "business" | "organization".
+  Nota: el tipo de cuenta se muestra, pero NUNCA afecta el orden de los resultados.
+
+PostLocation
+  placeId   string                   no  Place ID de Google Maps.
+  name      string                   no  Nombre del lugar ("Feria libre de Melipilla").
+  address   string                   no  Dirección como la entrega Google.
+  position  { lat: number, lng: number }  sí  Coordenadas.
+  Es independiente de "communes": una publicación sin location igual tiene sus comunas.
+
+Lo que el frontend NO necesita en la búsqueda (no hace falta enviarlo)
+  - Datos de la cuenta más allá de displayName y accountType (login, correo de cuenta, teléfono
+    de cuenta, verificación).
+  - Atributos específicos por categoría (attributes): todavía POR DEFINIR.
+  - Datos de origen de las publicaciones "curated" (de dónde se sacó la información).
+
+
+======================================================================
+7. EJEMPLO COMPLETO
+======================================================================
+
+Caso: alguien busca "casa" en Melipilla, en la categoría Arriendos, vista de lista, primera
+página.
+
+URL en la web:
+  /search?q=casa&commune=melipilla&category=real-estate
+
+Request principal que hace el frontend:
+  GET /posts?q=casa&commune=melipilla&category=real-estate&sort=relevance&limit=12
+
+Response 200:
+{
+  "items": [
+    {
+      "id": "p0021",
+      "title": "Arriendo casa 3 dormitorios con patio",
+      "description": "Casa amplia en villa tranquila, cerca de colegios y supermercado. Estacionamiento para dos autos.",
+      "category": {
+        "id": "k2",
+        "slug": "real-estate",
+        "name": "Arriendos y propiedades",
+        "status": "approved"
+      },
+      "communes": [
+        {
+          "id": "c1",
+          "slug": "melipilla",
+          "name": "Melipilla",
+          "center": { "lat": -33.6891, "lng": -71.2153 }
+        }
+      ],
+      "sector": "Villa Los Jardines",
+      "location": {
+        "placeId": "ChIJ...ejemplo",
+        "address": "Villa Los Jardines, Melipilla, Chile",
+        "position": { "lat": -33.6952, "lng": -71.2087 }
+      },
+      "price": { "type": "fixed", "amount": 450000 },
+      "imageUrls": [
+        "https://cdn.posteate.cl/posts/p0021/1.jpg",
+        "https://cdn.posteate.cl/posts/p0021/2.jpg"
+      ],
+      "status": "active",
+      "publishedAt": "2026-11-20T14:32:00.000Z",
+      "expiresAt": "2026-12-20T14:32:00.000Z",
+      "source": "account",
+      "author": {
+        "displayName": "Carolina M.",
+        "accountType": "person"
+      },
+      "contactWhatsapp": "56912345678",
+      "contactEmail": "carolina.contacto@example.com"
+    },
+    {
+      "id": "p0118",
+      "title": "Arriendo pieza amoblada para estudiante",
+      "description": "Pieza con baño compartido, internet incluido. Cerca de la locomoción a Santiago.",
+      "category": {
+        "id": "k2",
+        "slug": "real-estate",
+        "name": "Arriendos y propiedades",
+        "status": "approved"
+      },
+      "communes": [
+        {
+          "id": "c1",
+          "slug": "melipilla",
+          "name": "Melipilla",
+          "center": { "lat": -33.6891, "lng": -71.2153 }
+        }
+      ],
+      "price": { "type": "range", "min": 160000, "max": 200000 },
+      "imageUrls": [],
+      "status": "active",
+      "publishedAt": "2026-11-18T09:05:00.000Z",
+      "expiresAt": "2026-12-03T09:05:00.000Z",
+      "source": "curated",
+      "contactWhatsapp": "56987654321"
+    }
+  ],
+  "nextCursor": "eyJzY29yZSI6My44NSwicHVibGlzaGVkQXQiOiIyMDI2LTExLTE4VDA5OjA1OjAwLjAwMFoiLCJpZCI6InAwMTE4In0"
+}
+
+Fíjate en el segundo item:
+  - "curated": no trae "author" y la UI muestra "Cargada por Posteate".
+  - No trae "sector", "location" ni "contactEmail": son opcionales.
+  - imageUrls vacío: la tarjeta muestra "Sin fotos".
+  - Precio en rango.
+
+Página siguiente:
+  GET /posts?q=casa&commune=melipilla&category=real-estate&sort=relevance&limit=12&cursor=eyJzY29yZSI6My44NSwicHVibGlzaGVkQXQiOiIyMDI2LTExLTE4VDA5OjA1OjAwLjAwMFoiLCJpZCI6InAwMTE4In0
+
+Última página:
+  { "items": [ ... ], "nextCursor": null }
+
+Sin resultados:
+  { "items": [], "nextCursor": null }      ← 200, no 404.
+
+
+======================================================================
+8. PENDIENTES A ACORDAR CON BACKEND
+======================================================================
+
+  1. Prefijo de versión: ¿/api/v1/posts o /posts?
+  2. Listas en parámetros: ¿comas (commune=a,b) o repetidos (commune=a&commune=b)?
+  3. Formato de errores, y qué responder con un cursor inválido (sugerencia: 400 INVALID_CURSOR).
+  4. Límite máximo de "limit" (sugerencia: 50).
+  5. ¿commune-counts devuelve el objeto Commune completo o solo communeId?
+  6. Dominio final de las imágenes (S3/R2), para permitirlo en next.config.js.
+  7. Exposición de contactWhatsapp y contactEmail a bots: ver consideraciones.txt en la raíz del
+     repo. Si se decide pedir el contacto aparte, estos campos dejarían de venir en la búsqueda.
+  8. A futuro, si hay muchas llamadas por carga: endpoint único para los carruseles
+     (GET /posts/discovery).

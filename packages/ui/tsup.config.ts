@@ -2,8 +2,7 @@ import { defineConfig, Options } from "tsup";
 
 export default defineConfig((options: Options) => ({
   entry: {
-    web: "src/web/index.tsx",
-    native: "src/native/index.tsx",
+    index: "src/index.tsx",
   },
   banner: {
     js: "'use client'",

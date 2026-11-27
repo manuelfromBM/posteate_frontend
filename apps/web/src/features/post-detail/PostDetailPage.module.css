@@ -1,0 +1,145 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 24px 0;
+}
+
+/* Without the related band below, keep room for the floating contact buttons. */
+.page[data-ends-page] {
+  padding-bottom: 112px;
+}
+
+/*
+ * Desktop: gallery and content on the left, contact card sticky on the right.
+ * Mobile: a single column, with the contact card right after the title.
+ */
+.layout {
+  display: grid;
+  grid-template-areas:
+    "gallery aside"
+    "header aside"
+    "body aside";
+  grid-template-rows: auto auto 1fr;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 24px 40px;
+}
+
+.gallery {
+  grid-area: gallery;
+}
+
+.gallery[data-unavailable] {
+  filter: grayscale(0.7);
+  opacity: 0.8;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  grid-area: header;
+}
+
+.aside {
+  grid-area: aside;
+}
+
+.aside > * {
+  position: sticky;
+  top: 24px;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  grid-area: body;
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.category {
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--color-lilac-100);
+  color: var(--color-lilac-800);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.category:hover {
+  background: var(--color-lilac-200);
+}
+
+.proposed {
+  padding: 5px 12px;
+  border: 1.5px dashed var(--color-lilac-400);
+  border-radius: 999px;
+  color: var(--color-lilac-700);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  overflow-wrap: anywhere;
+}
+
+.description {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 800;
+}
+
+.text {
+  margin: 0;
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 900px) {
+  .page {
+    gap: 18px;
+    padding: 16px 16px 0;
+  }
+
+  .layout {
+    grid-template-areas:
+      "gallery"
+      "header"
+      "aside"
+      "body";
+    grid-template-rows: none;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+
+  .gallery {
+    margin: 0 -16px;
+  }
+
+  .aside > * {
+    position: static;
+  }
+}

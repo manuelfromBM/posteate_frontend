@@ -1,0 +1,82 @@
+.carousel {
+  position: relative;
+}
+
+.track {
+  display: flex;
+  gap: 16px;
+  margin: 0 -24px;
+  padding: 4px 24px 12px;
+  overflow-x: auto;
+  list-style: none;
+  scroll-padding-inline: 24px;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+
+.track::-webkit-scrollbar {
+  display: none;
+}
+
+.item {
+  flex: 0 0 280px;
+  scroll-snap-align: start;
+}
+
+.arrow {
+  position: absolute;
+  top: 42%;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1.5px solid var(--color-ink);
+  border-radius: 50%;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  box-shadow: 3px 3px 0 var(--color-lilac-300);
+  cursor: pointer;
+  transform: translateY(-50%);
+  transition:
+    opacity 140ms ease,
+    transform 140ms ease;
+}
+
+.arrow[data-side="prev"] {
+  left: -14px;
+}
+
+.arrow[data-side="next"] {
+  right: -14px;
+}
+
+.arrow:hover {
+  transform: translateY(-50%) scale(1.06);
+}
+
+.arrow:disabled {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (hover: none) {
+  .arrow {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .track {
+    gap: 12px;
+    margin: 0 -16px;
+    padding-inline: 16px;
+    scroll-padding-inline: 16px;
+  }
+
+  /* The next card peeks in, hinting that the row scrolls. */
+  .item {
+    flex-basis: 78%;
+  }
+}

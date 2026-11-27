@@ -1,0 +1,66 @@
+CONSIDERACIONES PENDIENTES
+Proyecto: Posteate (apps/web)
+Fecha: 27-11-2026
+
+Temas que no bloquean hoy, pero hay que decidir antes de salir a producción.
+
+
+1. CORREOS Y NÚMEROS DE WHATSAPP EXPUESTOS A BOTS
+
+Qué pasa
+  Cada publicación muestra el número de WhatsApp y, si existe, el correo de contacto. Las páginas
+  se renderizan en el servidor (SSR) para que Google las indexe y se vean bien al compartirlas.
+  Por eso el número y el correo quedan escritos en el HTML: en los links "wa.me/569..." y
+  "mailto:...", y también en el payload de React que viaja con la página.
+
+  Cualquier bot que recorra el sitio puede juntar todos los números y correos en minutos, sin
+  cuenta y sin ejecutar JavaScript. Los recolectores de spam hacen justo eso.
+
+Riesgo
+  - Spam y estafas por WhatsApp y correo a quienes publican ("vi tu aviso", phishing, etc.).
+  - Listas de números de la zona vendidas o usadas para campañas.
+  - Mala experiencia: la gente puede dejar de publicar si empieza a recibir spam después de usar
+    Posteate.
+  - Ojo: los avisos "Cargados por Posteate" exponen datos de personas que no crearon la
+    publicación ellas mismas.
+
+Qué no se puede cambiar
+  - Ver y contactar no requiere cuenta (regla fija del producto). No se puede ocultar el contacto
+    detrás de un login.
+  - El contacto se hace por WhatsApp o correo, fuera de Posteate (sin chat interno en esta etapa).
+  Por lo tanto no se puede evitar al 100%: alguien decidido siempre puede copiar los datos a mano.
+  La meta es que juntarlos de forma masiva sea caro.
+
+Opciones (de menor a mayor esfuerzo)
+  a) Mostrar el contacto al tocar el botón.
+     El HTML ya no trae el número ni el correo. Al tocar "Contactar", el navegador los pide a una
+     ruta del servidor (por ejemplo GET /posts/{id}/contact) y recién ahí abre WhatsApp o el
+     correo. Frena a casi todos los bots simples.
+     Costo: un endpoint nuevo en la API (cambio de contrato) y un pequeño retraso al tocar.
+     Google igual indexa la publicación; solo deja de ver el número, lo que no afecta el SEO.
+
+  b) Límite de solicitudes (rate limit) en ese endpoint.
+     Por IP o huella del navegador: por ejemplo, N contactos por minuto. Complementa la opción a).
+
+  c) Protección contra bots en el endpoint de contacto.
+     Cloudflare Turnstile o similar, de forma invisible, solo cuando el tráfico se ve sospechoso.
+     Requiere aprobar el proveedor (dependencia nueva).
+
+  d) Ofuscar el correo en el HTML (codificarlo y armarlo con JavaScript).
+     Barato, pero solo frena a los bots más básicos. No sirve para los números de WhatsApp.
+
+  e) Que quien publica elija qué mostrar.
+     Por ejemplo, poder no mostrar el correo, o mostrar solo WhatsApp. El correo de contacto ya es
+     opcional y distinto del correo de inicio de sesión.
+
+Recomendación inicial
+  Hacer a) + b) antes de lanzar. Evaluar c) si aparece abuso real. Mientras tanto, nunca mostrar
+  el correo de inicio de sesión, solo el de contacto que la persona ingresó (ya implementado así).
+
+Dónde se toca
+  - apps/web/src/shared/ui/WhatsAppButton.tsx y EmailButton.tsx: hoy arman el link con el dato.
+  - apps/web/src/features/posts/components/PostCard.tsx y features/post-detail/components/
+    (ContactCard, StickyContactBar): reciben el post completo con el contacto.
+  - Backend: hoy la publicación trae contactWhatsapp y contactEmail. Con la opción a) dejarían de
+    venir en la búsqueda y en el detalle, y se pedirían aparte.
+  - docs/IA/domain.md y architecture.md: documentar la decisión cuando se tome.

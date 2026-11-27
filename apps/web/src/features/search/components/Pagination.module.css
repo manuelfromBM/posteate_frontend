@@ -1,0 +1,35 @@
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.more {
+  display: inline-flex;
+  align-items: center;
+  height: 48px;
+  padding: 0 26px;
+  border: 2px solid var(--color-ink);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 4px 4px 0 var(--color-lilac-300);
+  transition:
+    box-shadow 140ms ease,
+    transform 140ms ease;
+}
+
+.more:hover {
+  box-shadow: 6px 6px 0 var(--color-lilac-400);
+  transform: translate(-1px, -1px);
+}
+
+.back {
+  color: var(--color-muted);
+  font-weight: 600;
+}

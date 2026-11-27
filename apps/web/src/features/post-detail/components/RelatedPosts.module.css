@@ -1,0 +1,66 @@
+.band {
+  margin-top: 72px;
+  border-top: 1.5px solid var(--color-ink);
+  background: var(--color-lilac-50);
+}
+
+.inner {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 1200px;
+  margin: 0 auto;
+  /* Bottom room so the floating contact buttons never cover the last cards. */
+  padding: 40px 24px 112px;
+}
+
+.header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  margin: 2px 0 0;
+  color: var(--color-muted);
+  font-size: 0.9375rem;
+}
+
+.more {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: border-color 120ms ease;
+}
+
+.more:hover {
+  border-color: var(--color-ink);
+}
+
+@media (max-width: 640px) {
+  .band {
+    margin-top: 48px;
+  }
+
+  .inner {
+    padding: 28px 16px 104px;
+  }
+
+  .title {
+    font-size: 1.25rem;
+  }
+}

@@ -1,0 +1,55 @@
+/* Shared by the Google Maps markers and the schematic map. */
+.pin {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 4px;
+  border: 2px solid var(--color-ink);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font: 600 0.8125rem/1 var(--font-sans);
+  white-space: nowrap;
+  text-decoration: none;
+  box-shadow: 3px 3px 0 var(--color-lilac-300);
+  cursor: pointer;
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.pin:hover {
+  transform: translate(-1px, -1px) scale(1.04);
+  box-shadow: 4px 4px 0 var(--color-lilac-400);
+}
+
+.count {
+  display: grid;
+  place-items: center;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--color-lilac-300);
+  font-weight: 800;
+}
+
+.pin[data-selected] {
+  background: var(--color-ink);
+  color: var(--color-surface);
+}
+
+.pin[data-selected] .count {
+  background: var(--color-lilac-300);
+  color: var(--color-ink);
+}
+
+.pin[data-empty] {
+  border-color: var(--color-border);
+  color: var(--color-muted);
+  box-shadow: none;
+}
+
+.pin[data-empty] .count {
+  background: var(--color-lilac-50);
+}

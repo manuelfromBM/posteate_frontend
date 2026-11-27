@@ -1,0 +1,144 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  border-bottom: 1.5px solid var(--color-border);
+  background: rgb(255 255 255 / 85%);
+  backdrop-filter: saturate(1.4) blur(10px);
+}
+
+.inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  max-width: 1200px;
+  height: 64px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--color-ink);
+  text-decoration: none;
+}
+
+.logoMark {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1.5px solid var(--color-ink);
+  border-radius: 10px;
+  background: var(--color-lilac-300);
+  box-shadow: 2px 2px 0 var(--color-ink);
+  font-size: 1.125rem;
+  font-weight: 900;
+  transition: transform 140ms ease;
+}
+
+.logo:hover .logoMark {
+  transform: rotate(-6deg);
+}
+
+.logoText {
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.links {
+  display: flex;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  color: var(--color-muted);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    background 120ms ease,
+    color 120ms ease;
+}
+
+.link:hover {
+  background: var(--color-lilac-50);
+  color: var(--color-ink);
+}
+
+.link[aria-current="page"] {
+  background: var(--color-lilac-100);
+  color: var(--color-ink);
+}
+
+.publish {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 16px 0 12px;
+  border: 1.5px solid var(--color-ink);
+  border-radius: 999px;
+  background: var(--color-ink);
+  color: var(--color-surface);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 3px 3px 0 var(--color-lilac-300);
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.publish:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 var(--color-lilac-300);
+}
+
+.publish:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 var(--color-lilac-300);
+}
+
+@media (max-width: 640px) {
+  .inner {
+    height: 56px;
+    padding: 0 16px;
+  }
+
+  .logoMark {
+    width: 30px;
+    height: 30px;
+    font-size: 1rem;
+  }
+
+  .logoText {
+    font-size: 1.125rem;
+  }
+
+  .link {
+    padding: 0 10px;
+  }
+
+  .publish {
+    padding: 0 14px 0 10px;
+  }
+}

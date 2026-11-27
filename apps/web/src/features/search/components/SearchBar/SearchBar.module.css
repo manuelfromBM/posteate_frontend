@@ -1,0 +1,128 @@
+.bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 6px;
+  background: var(--color-surface);
+  border: 2px solid var(--color-ink);
+  border-radius: 999px;
+  box-shadow: 6px 6px 0 var(--color-lilac-300);
+  transition:
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.bar:focus-within {
+  box-shadow: 8px 8px 0 var(--color-lilac-400);
+  transform: translate(-1px, -1px);
+}
+
+.field {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 0 8px 0 16px;
+  color: var(--color-ink);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  height: 48px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 1.0625rem;
+  color: var(--color-ink);
+}
+
+.input::placeholder {
+  color: var(--color-muted);
+}
+
+.kbd {
+  display: grid;
+  place-items: center;
+  min-width: 24px;
+  height: 24px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-lilac-50);
+  color: var(--color-muted);
+  font: 600 0.75rem/1 var(--font-mono);
+}
+
+.divider {
+  width: 1px;
+  height: 28px;
+  background: var(--color-border);
+}
+
+.submit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--color-ink);
+  color: var(--color-surface);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 120ms ease,
+    color 120ms ease;
+}
+
+.submit:hover {
+  background: var(--color-lilac-300);
+  color: var(--color-ink);
+}
+
+.submit:disabled {
+  cursor: progress;
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 700ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 640px) {
+  .bar {
+    flex-wrap: wrap;
+    border-radius: 24px;
+  }
+
+  .field {
+    flex-basis: 100%;
+    padding-right: 4px;
+  }
+
+  .kbd,
+  .divider,
+  .submitLabel {
+    display: none;
+  }
+
+  .submit {
+    padding: 0 16px;
+  }
+}

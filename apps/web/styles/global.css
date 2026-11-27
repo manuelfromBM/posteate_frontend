@@ -1,8 +1,55 @@
+:root {
+  /* Palette: white, light purple (lilac) and black */
+  --color-surface: #ffffff;
+  --color-ink: #0b0b10;
+  --color-muted: #5d5a6b;
+  --color-border: #e6e1f2;
+
+  --color-lilac-50: #f8f5ff;
+  --color-lilac-100: #f0eaff;
+  --color-lilac-200: #e2d7ff;
+  --color-lilac-300: #cdb9ff;
+  --color-lilac-400: #b49bfa;
+  --color-lilac-500: #9a7bf0;
+  --color-lilac-700: #6a45cf;
+  --color-lilac-800: #4f2fa8;
+
+  /* Brand color reserved for WhatsApp contact */
+  --color-whatsapp: #25d366;
+  --color-whatsapp-dark: #1da851;
+  --color-whatsapp-darker: #168a42;
+
+  --font-sans: "Inter", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
-  font-family: "SF Pro Text", "SF Pro Icons", "Helvetica Neue", "Helvetica",
-    "Arial", sans-serif;
-  display: flex;
-  height: 100vh;
-  align-items: center;
-  justify-content: center;
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(1200px 500px at 50% -120px, var(--color-lilac-100), transparent 70%),
+    var(--color-surface);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--color-lilac-300);
+  color: var(--color-ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-lilac-500);
+  outline-offset: 2px;
 }

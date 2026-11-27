@@ -1,0 +1,18 @@
+.floating {
+  position: fixed;
+  right: max(24px, env(safe-area-inset-right));
+  bottom: max(24px, env(safe-area-inset-bottom));
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  filter: drop-shadow(0 6px 14px rgb(11 11 16 / 18%));
+}
+
+@media (max-width: 640px) {
+  .floating {
+    right: max(16px, env(safe-area-inset-right));
+    bottom: max(16px, env(safe-area-inset-bottom));
+  }
+}
